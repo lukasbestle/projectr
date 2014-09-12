@@ -1,0 +1,26 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Clones the repository of a site from the server, runs the script
+# .postdeploy.sh in the repository (if existing) and links the version
+# as current.
+#
+# Usage: site_deploy <site> <revision>
+#        
+#        <site>			Name of the site (directory in ~/web/sites/)
+#        <revision>	SHA-1 commit hash of the revision to checkout
+########################################################################
+
+site="$1"
+revision="$2"
+
+if [[ -z "$revision" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34msite_deploy\033[0m <site> <revision>"
+	exit 1
+fi
+
+# Delegate to project_deploy
+project_deploy "$HOME/web/sites/$site" "$revision"
+exit $?

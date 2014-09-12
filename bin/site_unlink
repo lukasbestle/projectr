@@ -1,0 +1,82 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Removes a link for the webserver pointing a domain to a site.
+#
+# Usage: site_unlink <site> [<domain>]
+#        
+#        <site>		Name of the site (directory in ~/web/sites/)
+#        <domain>	FQDN of the domain (like "example.com")
+#                	If not given, the site is completely unlinked
+########################################################################
+
+site="$1"
+domain="$2"
+
+if [[ -z "$site" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34msite_unlink\033[0m <site> [<domain>]"
+	exit 1
+fi
+
+# Check if the site exists
+if [[ ! -f "$HOME/web/sites/$site/.project" ]]; then
+	echo -e "\033[31mThe site \033[34m$site\033[31m does not exist or is invalid.\033[0m" >&2
+	exit 1
+fi
+
+# Check if the site has domains
+if [[ ! -f "$HOME/web/sites/$site/.domains" ]]; then
+	echo -e "\033[31mThe site \033[34m$site\033[31m does not have any domain links.\033[0m" >&2
+	exit 1
+fi
+
+if [[ -z "$domain" ]]; then
+	# Unlink all domains
+	
+	code=0
+	while read domain; do
+		# Run the script itself with a specific domain
+		site_unlink "$site" "$domain"
+		tempCode=$?
+		
+		# Error handling
+		if [[ $tempCode != 0 ]]; then
+			code=$tempCode
+		fi
+	done < "$HOME/web/sites/$site/.domains"
+	
+	exit $code
+fi
+
+# Check if there is a link for this domain
+if [[ ! -e "$HOME/web/$domain" ]]; then
+	echo -e "\033[31mThere is no link for the domain \033[34m$domain\033[31m.\033[0m" >&2
+	exit 1
+fi
+
+# Check if the domain belongs to the site
+if ! grep -Fxq -- "$domain" "$HOME/web/sites/$site/.domains"; then
+	echo -e "\033[31mThe domain \033[34m$domain\033[31m does not belong to the site \033[34m$site\033[31m.\033[0m" >&2
+	exit 1
+fi
+
+# Remove link
+echo -e "\033[1mRemoving link from site \033[34m$site\033[0;1m to domain \033[34m$domain\033[0;1m...\033[0m"
+if ! rm -f "$HOME/web/$domain"; then
+	echo -e "\033[31mCould not remove link at \033[34m$HOME/web/$domain\033[31m.\033[0m" >&2
+	exit 1
+fi
+echo -e " => \033[32mSuccess.\033[0m"
+
+# Remove from site's domains
+echo -e "\033[1mRemoving domain from site's domains (\033[34m.domains\033[0;1m file)...\033[0m"
+sed -i "/$domain/d" "$HOME/web/sites/$site/.domains"
+if [[ $? == 0 ]]; then
+	echo -e " => \033[32mSuccess.\033[0m"
+	exit 0
+else
+	echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+	exit 1
+fi

@@ -1,0 +1,17 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Lists all known sites.
+#
+# Usage: project_list
+########################################################################
+
+# Check if the sites directory exists
+if [[ ! -d "$HOME/web/sites" ]]; then
+	echo -e "\033[31mThere is no \033[34m~/web/sites\033[31m directory yet.\033[0m" >&2
+	exit 1
+fi
+
+ls "$HOME/web/sites" | cat # Make sure every item is printed on a new line
+exit $?

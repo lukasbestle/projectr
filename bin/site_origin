@@ -1,0 +1,28 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Prepares a site for deployment and sets the origin repository and
+# branch the site is connected to.
+#
+# Usage: site_origin <site> [<origin>]
+#        
+#        <site>		Name of the site (directory in ~/web/sites/)
+#        <origin>	Repository URL and branch name (<url>[#<branch>])
+#                	If omitted, the origin gets deleted.
+#                	If the string does not contain a "#", the branch is
+#                	set to "master".
+########################################################################
+
+site="$1"
+origin="$2"
+
+if [[ -z "$site" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34msite_origin\033[0m <site> [<origin>]"
+	exit 1
+fi
+
+# Delegate to project_origin
+project_origin "$HOME/web/sites/$site" "$origin"
+exit $?

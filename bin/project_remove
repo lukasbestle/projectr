@@ -1,0 +1,43 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Removes a project directory.
+#
+# Usage: project_remove <project>
+#        
+#        <project>	Path to the project
+########################################################################
+
+project="$1"
+
+if [[ -z "$project" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34mproject_remove\033[0m <project>"
+	exit 1
+fi
+
+# Check if the project exists
+if [[ ! -f "$project/.project" ]]; then
+	echo -e "\033[31mThe project \033[34m$project\033[31m does not exist or is invalid.\033[0m" >&2
+	exit 1
+fi
+
+# Delete project
+echo -e "\033[1mDeleting project directory \033[34m$project\033[0;1m...\033[0m"
+if ! rm -Rf $project; then
+	echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+	exit 1
+fi
+echo -e " => \033[32mSuccess.\033[0m"
+
+# Remove from ~/.projects
+echo -e "\033[1mRemoving project from \033[34m~/.projects\033[0;1m...\033[0m"
+realpath="$(readlink -f "$project")"
+if ! sed -i "/${realpath//\//\/}/d" "$HOME/.projects"; then # Replace / with \/ because of the sed separators
+	echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+	exit 1
+fi
+echo -e " => \033[32mSuccess.\033[0m"
+
+exit 0

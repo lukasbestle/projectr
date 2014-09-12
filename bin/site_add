@@ -1,0 +1,46 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Creates a site directory in ~/web/sites/, bootstraps it with a basic
+# directory structure and optionally prepares it for deployments.
+#
+# Usage: site_add <site> [<origin>]
+#        
+#        <site>		Name of the site (directory in ~/web/sites/)
+#        <origin>	Repository URL and branch name (<url>[#<branch>])
+########################################################################
+
+site="$1"
+origin="$2"
+
+if [[ -z "$site" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34msite_add\033[0m <site> [<origin>]"
+	exit 1
+fi
+
+# If there is no ~/web/sites directory yet, create it
+if [[ ! -d "$HOME/web/sites" ]]; then
+	echo -e "\033[1mCreating directory \033[34m~/web/sites\033[0;1m for first site...\033[0m"
+	if ! mkdir "$HOME/web/sites"; then
+		echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+		exit 1
+	fi
+	echo -e " => \033[32mSuccess.\033[0m"
+fi
+
+# Create project
+if ! project_add "$HOME/web/sites/$site" "$origin"; then
+	exit $?
+fi
+
+# Create .domains file
+echo -e "\033[1mInitializing empty \033[34m.domains\033[0;1m file for site...\033[0m"
+if ! touch "$HOME/web/sites/$site/.domains"; then
+	echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+	exit 1
+fi
+echo -e " => \033[32mSuccess.\033[0m"
+
+exit 0

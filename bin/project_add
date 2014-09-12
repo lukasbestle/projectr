@@ -1,0 +1,58 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Creates a project directory, bootstraps it with a basic directory
+# structure and optionally prepares it for deployments.
+#
+# Usage: project_add <project> [<origin>]
+#        
+#        <project>	Path to the project
+#        <origin>		Repository URL and branch name (<url>[#<branch>])
+########################################################################
+
+project="$1"
+origin="$2"
+
+if [[ -z "$project" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34mproject_add\033[0m <project> [<origin>]"
+	exit 1
+fi
+
+# Check if the project already exists
+if [[ -e "$project" ]]; then
+	echo -e "\033[31mThe destination \033[34m$project\033[31m already exists.\033[0m" >&2
+	exit 1
+fi
+
+# Create project directory
+echo -e "\033[1mCreating project at \033[34m$project\033[0;1m...\033[0m"
+if ! (mkdir "$project" && mkdir "$project/data" && touch "$project/.project"); then
+	echo -e "\033[31mCould not create directory structure at \033[34m$project\033[31m.\033[0m" >&2
+	exit 1
+fi
+echo -e " => \033[32mSuccess.\033[0m"
+
+# Add to ~/.projects
+echo -e "\033[1mAdding project to \033[34m~/.projects\033[0;1m...\033[0m"
+if ! echo "$(readlink -f "$project")" >> "$HOME/.projects"; then
+	echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+	exit 1
+fi
+echo -e " => \033[32mSuccess.\033[0m"
+
+# Add origin if given
+if [[ -n "$origin" ]]; then
+	project_origin "$project" "$origin"
+	exit $?
+else
+	echo -e "\033[1mInitializing local project directory at \033[34m$project/current\033[0;1m...\033[0m"
+	if ! mkdir "$project/current"; then
+		echo -e "\033[31mCould not create local project directory.\033[0m" >&2
+		exit 1
+	fi
+	echo -e " => \033[32mSuccess.\033[0m"
+	
+	exit 0
+fi

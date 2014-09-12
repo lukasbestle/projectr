@@ -1,0 +1,198 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Clones the repository of a project from the server, runs the script
+# .postdeploy.sh in the repository (if existing) and links the version
+# as current.
+#
+# Usage: project_deploy <project> <revision>
+#        
+#        <project>	Path to the project
+#        <revision>	SHA-1 commit hash of the revision to checkout
+########################################################################
+# Functions
+
+# Reverses changes
+function project_deploy::reverse() {
+	local project="$1"
+	local destination="$2"
+	local shiftLinks=$3
+	
+	echo -e "\033[1mReversing changes...\033[0m"
+	
+	# Remove destination directory
+	rm -Rf "$destination"
+	
+	# Shift links back to their old state
+	if [[ $shiftLinks == true ]]; then
+		rm -f "$project/current"
+		if [[ -e "$project/last" ]]; then
+			mv "$project/last" "$project/current"
+		fi
+	fi
+}
+
+# Builds the paths to a version
+declare directoryCount versionNumber versionName destinationRelative destination
+function buildVersionPath() {
+	destinationRelative="versions/$versionName"
+	destination="$(cd "$project" && echo -n "$(pwd)/$destinationRelative")"
+}
+
+########################################################################
+
+project="$1"
+revision="$2"
+
+# Load configuration
+CONFIG_PRESERVE_VERSIONS=5
+CONFIG_HASH_LENGTH=40
+if [[ -f "$HOME/.project.cnf" ]]; then
+	source "$HOME/.project.cnf"
+fi
+if [[ $CONFIG_PRESERVE_VERSIONS == 1 ]]; then
+	echo -e "\033[31mThe value of \033[34m\$CONFIG_PRESERVE_VERSIONS\033[31m is too low (\033[34m1\033[31m), setting it to \033[34m2\033[31m.\033[0m" >&2
+	CONFIG_PRESERVE_VERSIONS=2
+fi
+
+if [[ -z "$revision" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34mproject_deploy\033[0m <project> <revision>"
+	exit 1
+fi
+
+# Check if the project exists
+if [[ ! -f "$project/.project" ]]; then
+	echo -e "\033[31mThe project \033[34m$project\033[31m does not exist or is invalid.\033[0m" >&2
+	exit 1
+fi
+
+# Check if the project can be updated
+if [[ ! -f "$project/.origin" ]]; then
+	echo -e "\033[31mThe project \033[34m$project\033[31m is not deployable.\033[0m" >&2
+	exit 1
+fi
+
+# Check if the commit hash is valid
+if [[ ${#revision} != $CONFIG_HASH_LENGTH ]]; then
+	echo -e "\033[31mThe length of the revision name \033[34m$revision\033[31m is not equal to the configured \033[34m$CONFIG_HASH_LENGTH\033[31m characters.\033[0m" >&2
+	exit 1
+fi
+
+# Add header to log
+log="$project/logs/$revision.log"
+if [[ -f "$log" ]]; then
+	# Separator between multiple logs
+	echo -e "\033[1;35m======\033[0m" >> "$log"
+fi
+echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n------\033[0m" >> "$log"
+
+# Log everything beginning here
+{	
+	# Check if we already installed this version
+	if ls "$project/versions"/*-$revision &> /dev/null; then
+		# Yes, use that
+		
+		# Build the pathname of the destination directory
+		versionName=$(basename $(echo "$project/versions"/*-$revision))
+		buildVersionPath
+		
+		echo -e "\033[1mThis revision has already been installed, using previous installation \033[34m$versionName\033[0;1m.\033[0m"
+	else
+		# No, fetch and install
+		
+		# Build the pathname of the destination directory
+		# Get all version names, get the last one, split it by "-" and get the first part, remove leading zeros
+		latestVersion=$(echo "$(ls "$project/versions" | tail -1)" | cut -f1 -d- | sed 's/^0*//')
+		versionNumber=$(($latestVersion + 1)) # Next is +1
+		versionName="$(printf "%05d" "$versionNumber")-$revision"
+		buildVersionPath
+		
+		# Clone the project
+		url=$(cat "$project/.origin")
+		echo -e "\033[1mCloning from \033[34m$url\033[0;1m...\033[0m"
+		if ! git clone --recursive "$url" "$destination"; then
+			echo -e " => \033[31mCould not clone project \033[34m$project\033[31m from \033[34m$url\033[31m.\033[0m" >&2
+			project_deploy::reverse "$project" "$destination"
+			exit
+		fi
+		echo -e " => \033[32mSuccess.\033[0m"
+		
+		# Checkout correct revision
+		echo -e "\033[1mChecking out revision \033[34m$revision\033[0;1m...\033[0m"
+		if ! $(cd "$destination" && git checkout "$revision"); then
+			echo -e " => \033[31mCould not checkout revision \033[34m$revision\033[31m of project \033[34m$project\033[31m.\033[0m" >&2
+			project_deploy::reverse "$project" "$destination"
+			exit 1
+		fi
+		echo -e " => \033[32mSuccess.\033[0m"
+		
+		# Run post-deploy script if existing
+		if [[ -f "$destination/.postdeploy.sh" ]]; then
+			# Set the working directory to the destination
+			oldpwd="$(pwd)"
+			cd "$destination"
+			
+			echo -e "\033[1mRunning post-deploy script...\033[0m"
+			if ! $destination/.postdeploy.sh; then
+				echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+				project_deploy::reverse "$project" "$destination"
+				exit 1
+			fi
+			echo -e " => \033[32mSuccess.\033[0m"
+			
+			cd "$oldpwd"
+		fi
+		
+		# Remove .git directory
+		echo -e "\033[1mDeleting \033[34m.git\033[0;1m directory...\033[0m"
+		if ! rm -Rf "$destination/.git"; then
+			echo -e " => \033[31mCould not delete \033[34m.git\033[31m directory.\033[0m" >&2
+			project_deploy::reverse "$project" "$destination"
+			exit 1
+		fi
+		echo -e " => \033[32mSuccess.\033[0m"
+		
+		# Clean up old versions
+		if [[ $CONFIG_PRESERVE_VERSIONS -gt 0 ]]; then
+			echo -e "\033[1mCleaning up old versions...\033[0m"
+			# Delete the first version until there are $CONFIG_PRESERVE_VERSIONS versions
+			while [[ $(ls -q "$project/versions" | wc -l) -gt $CONFIG_PRESERVE_VERSIONS ]]; do
+				item="$(ls -d "$project/versions"/* | head -1)"
+				echo -e " - Deleting \033[34m$item\033[0m..."
+				rm -Rf "$item"
+			done
+			echo -e " => \033[32mSuccess.\033[0m"
+		else
+			echo -e "\033[1;31mNot\033[0;1m cleaning up old versions (disabled in configuration).\033[0m"
+		fi
+	fi
+	
+	# Create symlinks to current version
+	echo -e "\033[1mSymlinking new version...\033[0m"
+	# Remove old symlink
+	if ! rm -f "$project/last"; then
+		echo -e " => \033[31mCould not delete old link.\033[0m" >&2
+		project_deploy::reverse "$project" "$destination"
+		exit 1
+	fi
+	# Move current symlink to old symlink
+	if [[ -e "$project/current" ]]; then
+		if ! mv "$project/current" "$project/last"; then
+			echo -e " => \033[31mCould not shift current link to old link.\033[0m" >&2
+			project_deploy::reverse "$project" "$destination"
+			exit 1
+		fi
+	fi
+	# Create new symlink
+	if ! ln -s "$destinationRelative" "$project/current"; then
+		echo -e " => \033[31mCould not create new link.\033[0m" >&2
+		project_deploy::reverse "$project" "$destination" true
+		exit 1
+	fi
+	echo -e " => \033[32mSuccess.\033[0m"
+	
+} 2>&1 | tee -a "$log" # Duplicate output to log file
+
+exit 0

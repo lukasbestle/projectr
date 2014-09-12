@@ -1,0 +1,22 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Reverses a deployable site to the last version.
+#
+# Usage: site_rollback <site>
+#        
+#        <site>	Name of the site (directory in ~/web/sites/)
+########################################################################
+
+site="$1"
+
+if [[ -z "$site" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34msite_rollback\033[0m <site>"
+	exit 1
+fi
+
+# Delegate to project_rollback
+project_rollback "$HOME/web/sites/$site"
+exit $?

@@ -1,0 +1,34 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Unlinks and removes a site directory in ~/web/sites/.
+#
+# Usage: site_remove <site>
+#        
+#        <site>	Name of the site (directory in ~/web/sites/)
+########################################################################
+
+site="$1"
+
+if [[ -z "$site" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34msite_remove\033[0m <site>"
+	exit 1
+fi
+
+# Check if the site exists
+if [[ ! -f "$HOME/web/sites/$site/.project" ]]; then
+	echo -e "\033[31mThe site \033[34m$site\033[31m does not exist or is invalid.\033[0m" >&2
+	exit 1
+fi
+
+# Unlink site
+if ! site_unlink "$site"; then
+	echo -e " => \033[31mCould not unlink domains of site \033[34m$site\033[31m.\033[0m" >&2
+	exit 1
+fi
+
+# Delegate to project_remove
+project_remove "$HOME/web/sites/$site"
+exit $?

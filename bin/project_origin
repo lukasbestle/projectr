@@ -1,0 +1,99 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Prepares a project for deployment and sets the origin repository and
+# branch the project is connected to.
+#
+# Usage: project_origin <project> [<origin>]
+#        
+#        <project>	Path to the project
+#        <origin>		Repository URL and branch name (<url>[#<branch>])
+#                		If omitted, the origin gets deleted.
+#                		If the string does not contain a "#", the branch is
+#                		set to "master" ($CONFIG_DEFAULT_BRANCH).
+########################################################################
+
+project="$1"
+origin="$2"
+
+# Load configuration
+CONFIG_DEFAULT_BRANCH="master"
+if [[ -f "$HOME/.project.cnf" ]]; then
+	source "$HOME/.project.cnf"
+fi
+
+if [[ -z "$project" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34mproject_origin\033[0m <project> [<origin>]"
+	exit 1
+fi
+
+# Check if the project exists
+if [[ ! -f "$project/.project" ]]; then
+	echo -e "\033[31mThe project \033[34m$project\033[31m does not exist or is invalid.\033[0m" >&2
+	exit 1
+fi
+
+if [[ -n "$origin" ]]; then
+	# Origin was defined, initialize
+	
+	# Check if there are project files already
+	files=$(shopt -s nullglob; shopt -s dotglob; echo "$project/current"/*)
+	if [[ ${#files} -gt 0 ]]; then
+		echo -e "\033[31mThe project \033[34m$project\033[31m already has a non-empty \033[34mcurrent\033[31m directory. Please backup and delete it first.\033[0m" >&2
+		exit 1
+	fi
+	
+	# Delete the symlink or directory "current"
+	if ! rm -Rf "$project/current"; then
+		echo -e "\033[31mCould not delete old \033[34mcurrent\033[31m link/directory.\033[0m" >&2
+		exit 1
+	fi
+	
+	# Split origin URL and branch by "#" character
+	if [[ "$origin" == *#* ]]; then
+		url="$(echo "$origin" | cut -f1 -d#)"
+		branch="$(echo "$origin" | cut -f2 -d#)"
+	else
+		# No branch given, set to master
+		url="$origin"
+		branch=$CONFIG_DEFAULT_BRANCH
+	fi
+	
+	# Check if the required directory structure already exists
+	if [[ ! -d "$project/versions" || ! -d "$project/logs" ]]; then
+		# Create structure for deployable projects
+		echo -e "\033[1mInitializing deployment directory structure for project \033[34m$project\033[0;1m...\033[0m"
+		if ! (mkdir -p "$project/versions" && mkdir -p "$project/logs"); then
+			echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+			exit 1
+		fi
+		echo -e " => \033[32mSuccess.\033[0m"
+	fi
+	
+	# Set origin and branch files
+	echo -e "\033[1mSetting URL to \033[34m$url\033[0;1m and branch to \033[34m$branch\033[0;1m...\033[0m"
+	if ! (echo -n "$url" > "$project/.origin" && echo -n "$branch" > "$project/.branch"); then
+		echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+		exit 1
+	fi
+	echo -e " => \033[32mSuccess.\033[0m"
+else
+	# Origin was not defined, unset
+	
+	# Check if the project has an origin
+	if [[ ! -f "$project/.origin" ]]; then
+		echo -e "\033[31mThe project \033[34m$project\033[31m does not currently have an origin.\033[0m" >&2
+		exit 1
+	fi
+	
+	echo -e "\033[1mDeleting origin configuration files for project \033[34m$project\033[0;1m...\033[0m"
+	if ! rm -f "$project/.origin" "$project/.branch"; then
+		echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+		exit 1
+	fi
+	echo -e " => \033[32mSuccess.\033[0m"
+fi
+
+exit 0

@@ -1,0 +1,17 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Lists all known project directories.
+#
+# Usage: project_list
+########################################################################
+
+# Check if the ~/.project file exists
+if [[ ! -f "$HOME/.projects" ]]; then
+	echo -e "\033[31mThere is no \033[34m~/.projects\033[31m file yet.\033[0m" >&2
+	exit 1
+fi
+
+cat "$HOME/.projects"
+exit $?

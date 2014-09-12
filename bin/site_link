@@ -1,0 +1,57 @@
+#!/bin/bash
+########################################################################
+# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+########################################################################
+# Creates a link for the webserver pointing a domain to a site.
+#
+# Usage: site_link <site> <domain>
+#        
+#        <site>		Name of the site (directory in ~/web/sites/)
+#        <domain>	FQDN of the domain (like "example.com")
+########################################################################
+
+site="$1"
+domain="$2"
+
+if [[ -z "$domain" ]]; then
+	# Print help
+	echo -e "\033[1mUsage:\033[0m \033[34msite_link\033[0m <site> <domain>"
+	exit 1
+fi
+
+# Check if the site exists
+if [[ ! -f "$HOME/web/sites/$site/.project" ]]; then
+	echo -e "\033[31mThe site \033[34m$site\033[31m does not exist or is invalid.\033[0m" >&2
+	exit 1
+fi
+
+# Check if the site currently has a current version
+if [[ ! -e "$HOME/web/sites/$site/current" ]]; then
+	echo -e "\033[31mThe site \033[34m$site\033[31m currently does not have a current version, please deploy first.\033[0m" >&2
+	exit 1
+fi
+
+# Check if there is already a link with this domain
+if [[ -e "$HOME/web/$domain" ]]; then
+	echo -e "\033[31mA link for the domain \033[34m$domain\033[31m already exists.\033[0m" >&2
+	exit 1
+fi
+
+# Create link
+echo -e "\033[1mCreating link from site \033[34m$site\033[0;1m to domain \033[34m$domain\033[0;1m...\033[0m"
+if ! ln -s "sites/$site/current" "$HOME/web/$domain"; then
+	echo -e "\033[31mCould not create link at \033[34m$HOME/web/$domain\033[31m.\033[0m" >&2
+	exit 1
+fi
+echo -e " => \033[32mSuccess.\033[0m"
+
+# Add to site's domains
+echo -e "\033[1mAdding domain to site's domains (\033[34m.domains\033[0;1m file)...\033[0m"
+echo "$domain" >> "$HOME/web/sites/$site/.domains"
+if [[ $? == 0 ]]; then
+	echo -e " => \033[32mSuccess.\033[0m"
+	exit 0
+else
+	echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+	exit 1
+fi
