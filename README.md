@@ -8,6 +8,71 @@
 
 As a user with a [pretty complex routing setup](https://git.lukasbestle.com/groups/sites), I wanted to automate setting up new sites and updating them automatically from a Git repository. This toolset provides some CLI tools to make that possible.
 
+### Example
+
+Let's say you have a main site at `example.com` and another project at `subdomain.example.com`. You want the main site to be accessible from `example.net` as well. The main site is located at a GitHub repository from where everything should be deployed automatically.  
+The result is the following setup:
+
+	example.com/example.net -> Main site ("main_site")
+	subdomain.example.com   -> Other project ("other_project")
+
+This is a tutorial on how you would implement this setup with this toolset.
+
+1. **Make sure you follow the setup instructions below.**
+2. **Create the sites**
+   
+   ```bash
+   # Create a new site and set the origin URL to the clone URL of your GitHub repository.
+   site_add main_site https://github.com/organization/main.git
+   
+   # "other_project" is a local project and does not have an origin.
+   site_add other_project
+   ```
+   
+   You can now locate the sites at `~/web/sites/main_site` and `~/web/sites/other_project`.  
+   Using `project_add` is similar, but it uses a custom project path – the headers of the files in `bin/` contain detailed usage information.
+3. **Get the current state from your GitHub repository (other Git repositories work the same)**
+   
+   As "main_site" was setup using a clone URL, you can use `site_deploy <site> <revision>` to get and install the current state of your project:
+   
+   ```bash
+   # You need the full SHA-1 hash of your commit for this to work.
+   # Automatic deployments using web hooks do this for you automatically.
+   site_deploy main_site 78ca1d2fa93147b0...
+   ```
+   
+   There is now a log of the deployment in `~/web/sites/main_site/logs/`, the project code at `~/web/sites/main_site/versions/00001-78ca1d2fa93147b0...` and a symlink to the code at `~/web/sites/main_site/current`. This symlink is automatically created if a deployment worked.
+4. **Set the domains to make your project accessible**
+   
+   Now that your projects are installed and ready, you can let this toolset create links, so the (abstract) sites are made available at specific domains:
+   
+   ```bash
+   # "main_site" should be available at example.com and example.net
+   site_link main_site example.com
+   site_link main_site example.net
+   
+   # "other_project" should be available at subdomain.example.com
+   site_link other_project subdomain.example.com
+   ```
+   
+   When deleting a site with `site_remove`, all of these domain links are automatically removed as well. You can also use `site_unlink` to unlink specific domains.
+
+If you setup automatic deployments (see below), your sites are automatically updated to the newest revision. This is done by cloning the project using `project_deploy` and updating the links, so the domain always points to the latest revision.
+
+Let's say you committed a mistake (haha) and you want to rollback to the last deployed (working) revision.  
+Since our example site "main_site" is deployable (it has an origin repository), it stores a history of (by default) 5 versions and keeps the link to the last version. This means that you can easily return to the last version and manually to an even older version:
+
+```bash
+# Rollback to the last version
+site_rollback main_site
+
+# Manually rollback to an even older version
+cd ~/web/sites/main_site
+rm last
+mv current last
+ln -s versions/<version to restore> current
+```
+
 ## Features
 
 - Create and delete projects (general) and sites (projects for the webserver)
