@@ -47,13 +47,13 @@ define('TOOLKIT_PATH', '/home/<user>/bin');
  * 9. Hit "Test Hook" in GitLab's settings interface. The project should be deployed a few seconds later.
  * 
  * Troubleshooting:
- *  - Use `cat <path to project>/logs/*.log`. This should tell you what went wrong.
+ *  - Use `tail -f <path to project>/logs/*.log`. This should tell you what went wrong.
  *  - Check if the TOOLKIT_PATH you set above is correct.
  *  - Check if you set the origin of your project to the correct URL.
  *  - Open the web hook URL you entered in GitLab in your browser and check if the output is "Authenticated, but no POST body sent.".
  *  - If there is no log file and you can't find the reason yourself, it is complicated. ;)
  *    Debugging this is not easy (GitLab does not seem to store logs of its requests), but you can try to craft a JSON body like GitLab,
- *    send it to this script by using cURLor GUI tools like Rested and it will tell you exactly what went wrong.
+ *    send it to this script by using cURL or GUI tools like Rested and it will tell you exactly what went wrong.
  */
 
 // 3. Done
@@ -70,8 +70,7 @@ if(!isset($_GET['token']) || $_GET['token'] !== AUTH_TOKEN) {
 }
 
 // Get the request body
-$inputPointer = fopen('php://input', 'r');
-$input = stream_get_contents($inputPointer);
+$input = file_get_contents('php://input');
 if(!$input) {
 	http_response_code(405);
 	die('Authenticated, but no POST body sent.');
