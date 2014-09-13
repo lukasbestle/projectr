@@ -58,7 +58,7 @@ The tool `project_deploy` takes the full path to the project and the Git revisio
 2. Read the file `~/.projects`, which contains the paths to all known projects and sites, and iterate through it.
 3. Open the projects `.origin` and `.branch` files. If they match the web-hook, run `project_deploy <path> <commit-sha1>` and you are done.
 
-You can find an example PHP script for GitLab webhooks in `webhook.gitlab.php`. Another one for GitHub might follow, but it should be easy to do.
+You can find example PHP implementations for GitHub and GitLab web hooks in `webhook.github.php` and `webhook.gitlab.php`.
 
 ## Setup
 
