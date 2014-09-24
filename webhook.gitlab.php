@@ -111,8 +111,8 @@ while(($project = fgets($listPointer)) !== false) {
 		// Found the right project
 		echo "Found project at $project, running deploy script.\n";
 		
-		// Run deploy script
-		passthru('export PATH=' . escapeshellarg(TOOLKIT_PATH) . ':$PATH; project_deploy ' . escapeshellarg($project) . ' ' . escapeshellarg($commit), $exitCode);
+		// Run deploy script (in the background, because GitLab doesn't like requests > 10sec by default)
+		passthru('export PATH=' . escapeshellarg(TOOLKIT_PATH) . ':$PATH; project_deploy ' . escapeshellarg($project) . ' ' . escapeshellarg($commit) . ' > /dev/null 2>&1 &', $exitCode);
 		
 		// If it didn't work, add debug statement
 		if($exitCode !== 0) echo "Something didn't work.\n";
