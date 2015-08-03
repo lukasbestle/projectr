@@ -63,6 +63,12 @@ define('TOOLKIT_PATH', '/home/<user>/bin');
 // We are always returning plain text
 header('Content-Type: text/plain');
 
+// Check if an auth token has been set
+if(AUTH_TOKEN == '<long token>') {
+	http_response_code(400);
+	die('No auth token has been set in ' . basename(__FILE__) . '. This script won\'t work without one.');
+}
+
 // Check if the authentication is valid
 if(!isset($_GET['token']) || $_GET['token'] !== AUTH_TOKEN) {
 	http_response_code(401);

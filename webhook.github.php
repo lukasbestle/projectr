@@ -61,6 +61,12 @@ define('TOOLKIT_PATH', '/home/<user>/bin');
 // We are always returning plain text
 header('Content-Type: text/plain');
 
+// Check if a secret has been set
+if(SECRET == '<long token>') {
+	http_response_code(400);
+	die('No secret has been set in ' . basename(__FILE__) . '. This script won\'t work without one.');
+}
+
 // Check which event this is
 if(!isset($_SERVER['HTTP_X_GITHUB_EVENT'])) {
 	http_response_code(400);
