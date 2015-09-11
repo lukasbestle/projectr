@@ -6,10 +6,11 @@
 # .postdeploy.sh in the repository (if existing) and links the version
 # as current.
 #
-# Usage: project_deploy <project> <revision>
+# Usage: project_deploy <project> [<revision>]
 #        
 #        <project>	Path to the project
 #        <revision>	SHA-1 commit hash of the revision to checkout
+#                  	Defaults to the latest commit on the set branch
 ########################################################################
 # Functions
 
@@ -56,10 +57,19 @@ if [[ $CONFIG_PRESERVE_VERSIONS == 1 ]]; then
 	CONFIG_PRESERVE_VERSIONS=2
 fi
 
-if [[ -z "$revision" ]]; then
+if [[ -z "$project" ]]; then
 	# Print help
-	echo -e "\033[1mUsage:\033[0m \033[34mproject_deploy\033[0m <project> <revision>"
+	echo -e "\033[1mUsage:\033[0m \033[34mproject_deploy\033[0m <project> [<revision>]"
 	exit 1
+fi
+if [[ -z "$revision" ]]; then
+	revision="latest"
+	
+	# Check if the default value for $CONFIG_HASH_LENGTH has been changed
+	if [[ $CONFIG_HASH_LENGTH != 40 ]]; then
+		echo -e "\033[31mYou changed the default value of \033[34m\$CONFIG_HASH_LENGTH\033[31m. To make sure the deployed revisions are unique and never duplicated, deployments of the latest revision aren't supported with a custom value of this option. Please give me the exact revision string in your custom length.\033[0m" >&2
+		exit 1
+	fi
 fi
 
 # Check if the project exists
@@ -74,12 +84,6 @@ if [[ ! -f "$project/.origin" ]]; then
 	exit 1
 fi
 
-# Check if the commit hash is valid
-if [[ ${#revision} != $CONFIG_HASH_LENGTH ]]; then
-	echo -e "\033[31mThe length of the revision name \033[34m$revision\033[31m is not equal to the configured \033[34m$CONFIG_HASH_LENGTH\033[31m characters.\033[0m" >&2
-	exit 1
-fi
-
 # Add header to log
 log="$project/logs/$revision.log"
 if [[ -f "$log" ]]; then
@@ -89,19 +93,10 @@ fi
 echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n------\033[0m" >> "$log"
 
 # Log everything beginning here
-{	
-	# Check if we already installed this version
-	if ls "$project/versions"/*-$revision &> /dev/null; then
-		# Yes, use that
-		
-		# Build the pathname of the destination directory
-		versionName=$(basename $(echo "$project/versions"/*-$revision))
-		buildVersionPath
-		
-		echo -e "\033[1mThis revision has already been installed, using previous installation \033[34m$versionName\033[0;1m.\033[0m"
-	else
-		# No, fetch and install
-		
+{
+	# Make sure the repository exists and is updated
+	# We only need to do this if the revision was not deployed yet
+	if ! ls "$project/versions"/*-$revision &> /dev/null; then
 		# Check if the repository has already been cloned
 		url=$(cat "$project/.origin")
 		if ! [[ -d "$project/repo" ]]; then
@@ -121,6 +116,45 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 			fi
 			echo -e " => \033[32mSuccess.\033[0m"
 		fi
+	fi
+	
+	# Determine the actual revision to use
+	if [[ "$revision" != "latest" ]]; then
+		# Check if the given commit hash is valid
+		if [[ ${#revision} != $CONFIG_HASH_LENGTH ]]; then
+			echo -e "\033[31mThe length of the revision name \033[34m$revision\033[31m is not equal to the configured \033[34m$CONFIG_HASH_LENGTH\033[31m characters.\033[0m" >&2
+			exit 1
+		fi
+	else
+		# Check if the set branch exists
+		branch=$(cat "$project/.branch")
+		echo -e "\033[1mDetermining current revision for branch \033[34m$branch\033[0;1m...\033[0m"
+		if ! (cd "$project/repo"; git show-branch "$branch" &> /dev/null); then
+			echo -e "\033[31mThe set branch \033[34m$branch\033[31m does not exist.\033[0m" >&2
+			exit 1
+		fi
+		
+		# Get the commit hash from the set branch
+		revision="$(cd "$project/repo"; git show --format=format:%H "$branch")"
+		if [[ $? != 0 ]]; then
+			echo -e " => \033[31mCould not determine current revision.\033[0m" >&2
+			exit 1
+		fi
+		
+		echo -e " => \033[32mUsing revision \033[34m$revision\033[32m.\033[0m"
+	fi
+	
+	# Check if we already installed this version
+	if ls "$project/versions"/*-$revision &> /dev/null; then
+		# Yes, use that
+		
+		# Build the pathname of the destination directory
+		versionName=$(basename $(echo "$project/versions"/*-$revision))
+		buildVersionPath
+		
+		echo -e "\033[1mThis revision has already been installed, using previous installation \033[34m$versionName\033[0;1m.\033[0m"
+	else
+		# No, fetch and install
 		
 		# Build the pathname of the destination directory
 		# Get all version names, get the last one, split it by "-" and get the first part, remove leading zeros

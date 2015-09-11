@@ -6,18 +6,19 @@
 # .postdeploy.sh in the repository (if existing) and links the version
 # as current.
 #
-# Usage: site_deploy <site> <revision>
+# Usage: site_deploy <site> [<revision>]
 #        
 #        <site>			Name of the site (directory in ~/web/sites/)
 #        <revision>	SHA-1 commit hash of the revision to checkout
+#                  	Defaults to the latest commit on the set branch
 ########################################################################
 
 site="$1"
 revision="$2"
 
-if [[ -z "$revision" ]]; then
+if [[ -z "$site" ]]; then
 	# Print help
-	echo -e "\033[1mUsage:\033[0m \033[34msite_deploy\033[0m <site> <revision>"
+	echo -e "\033[1mUsage:\033[0m \033[34msite_deploy\033[0m <site> [<revision>]"
 	exit 1
 fi
 

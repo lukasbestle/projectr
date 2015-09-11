@@ -33,11 +33,15 @@ This is a tutorial on how you would implement this setup with this toolset.
    Using `project_add` is similar, but it uses a custom project path – the headers of the files in `bin/` contain detailed usage information.
 3. **Get the current state from your GitHub repository (other Git repositories work the same)**
    
-   As "main_site" was setup using a clone URL, you can use `site_deploy <site> <revision>` to get and install the current state of your project:
+   As "main_site" was setup using a clone URL, you can use `site_deploy <site> [<revision>]` to fetch and install the current state of your project automatically:
    
    ```bash
-   # You need the full SHA-1 hash of your commit for this to work.
-   # Automatic deployments using web hooks do this for you automatically.
+   site_deploy main_site
+   ```
+   
+   If you omit the Git revision, the latest one is used instead. But if you want to deploy a specific revision, that's easy too:
+   
+   ```bash
    site_deploy main_site 78ca1d2fa93147b0...
    ```
    
