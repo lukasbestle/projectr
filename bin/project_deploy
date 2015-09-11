@@ -102,6 +102,26 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 	else
 		# No, fetch and install
 		
+		# Check if the repository has already been cloned
+		url=$(cat "$project/.origin")
+		if ! [[ -d "$project/repo" ]]; then
+			# No, clone it now
+			echo -e "\033[1mCloning from \033[34m$url\033[0;1m for the first time...\033[0m"
+			if ! git clone --recursive "$url" "$project/repo"; then
+				echo -e " => \033[31mCould not clone project \033[34m$project\033[31m from \033[34m$url\033[31m.\033[0m" >&2
+				exit 1
+			fi
+			echo -e " => \033[32mSuccess.\033[0m"
+		else
+			# Yes, only fetch from the remote repository
+			echo -e "\033[1mFetching new commits from \033[34m$url\033[0;1m...\033[0m"
+			if ! (cd "$project/repo"; git fetch; git submodule update --init --recursive); then
+				echo -e " => \033[31mCould not fetch from \033[34m$url\033[31m.\033[0m" >&2
+				exit 1
+			fi
+			echo -e " => \033[32mSuccess.\033[0m"
+		fi
+		
 		# Build the pathname of the destination directory
 		# Get all version names, get the last one, split it by "-" and get the first part, remove leading zeros
 		latestVersion=$(echo "$(ls "$project/versions" | tail -1)" | cut -f1 -d- | sed 's/^0*//')
@@ -109,13 +129,12 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		versionName="$(printf "%05d" "$versionNumber")-$revision"
 		buildVersionPath
 		
-		# Clone the project
-		url=$(cat "$project/.origin")
-		echo -e "\033[1mCloning from \033[34m$url\033[0;1m...\033[0m"
-		if ! git clone --recursive "$url" "$destination"; then
-			echo -e " => \033[31mCould not clone project \033[34m$project\033[31m from \033[34m$url\033[31m.\033[0m" >&2
+		# Copy repository to new destination
+		echo -e "\033[1mCopying repository to deployment destination...\033[0m"
+		if ! cp -R "$project/repo" "$destination"; then
+			echo -e " => \033[31mCould not copy repository.\033[0m" >&2
 			project_deploy::reverse "$project" "$destination"
-			exit
+			exit 1
 		fi
 		echo -e " => \033[32mSuccess.\033[0m"
 		

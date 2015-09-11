@@ -96,4 +96,12 @@ else
 	echo -e " => \033[32mSuccess.\033[0m"
 fi
 
-exit 0
+# Remove repo to make sure the new origin is used in the future
+if [[ -d "$project/repo" ]]; then
+	echo -e "\033[1mDeleting the old repository for project \033[34m$project\033[0;1m...\033[0m"
+	if ! rm -Rf "$project/repo"; then
+		echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+		exit 1
+	fi
+	echo -e " => \033[32mSuccess.\033[0m"
+fi

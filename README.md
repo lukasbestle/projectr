@@ -57,7 +57,7 @@ This is a tutorial on how you would implement this setup with this toolset.
    
    When deleting a site with `site_remove`, all of these domain links are automatically removed as well. You can also use `site_unlink` to unlink specific domains.
 
-If you setup automatic deployments (see below), your sites are automatically updated to the newest revision. This is done by cloning the project using `project_deploy` and updating the links, so the domain always points to the latest revision.
+If you setup automatic deployments (see below), your sites are automatically updated to the newest revision. This is done by cloning or fetching the repository using `project_deploy` and updating the links, so the domain link always points to the latest revision.
 
 Let's say you committed a mistake (haha) and you want to rollback to the last deployed (working) revision.  
 Since our example site "main_site" is deployable (it has an origin repository), it stores a history of (by default) 5 versions and keeps the link to the last version. This means that you can easily return to the last version and manually to an even older version:
@@ -98,7 +98,9 @@ Every project/site follows this directory structure:
 	logs     # Logs of all deployments
 	├── <commit-hash>.log
 	├── <commit-hash>.log
-	versions # Fully separate Git repositories of the project
+	repo     # Clone of the project's Git repository
+	├── …
+	versions # Copies of the repository checked out to a specific revision
 	├── <id>-<commit-hash>
 	│   └── <project files>
 	└── <id>-<commit-hash>
