@@ -75,11 +75,11 @@ ln -s versions/<version to restore> current
 
 ## Features
 
-- Create and delete projects (general) and sites (projects for the webserver)
+- Create and delete projects (general repositories like CLI tools) and sites (projects for the webserver)
 - Set an origin Git repository and branch to get new versions from
 - Create and delete links from one or multiple domains to a site
-- Get a specific new revision from the Git repository, run a setup script (`.postdeploy.sh` in the repository root) and point a link to the new version
-- Reverse a deployable project to the last version
+- Automatic Deployments from GitHub, GitLab or any other Git remote: Get a specific new revision from the Git repository, run a setup script (`.postdeploy.sh` in the repository root) and point a link to the new version
+- Reverse a deployable project to the last version in one step
 
 ### Directory structure of a project
 
@@ -117,13 +117,13 @@ If you don't want to keep old versions of your code and use automatic deployment
 
 ### Deployment setup
 
-The tool `project_deploy` takes the full path to the project and the Git revision to install. Obviously, this is not very useful, but easy to use in deployment hook scripts:
+The tool `project_deploy` takes the full path to the project and the Git revision to install. Obviously, this is not very useful, but easy to use in deployment hook scripts.
+
+You can find example PHP implementations for GitHub and GitLab web hooks in `webhook.github.php` and `webhook.gitlab.php`, but you can also create your own:
 
 1. Write a script that receives web-hooks from GitHub, GitLab or similar and get the repository URL, commit SHA-1 and branch name of the event from the transmitted data.
 2. Read the file `~/.projects`, which contains the paths to all known projects and sites, and iterate through it.
 3. Open the projects `.origin` and `.branch` files. If they match the web-hook, run `project_deploy <path> <commit-sha1>` and you are done.
-
-You can find example PHP implementations for GitHub and GitLab web hooks in `webhook.github.php` and `webhook.gitlab.php`.
 
 ## Setup
 
