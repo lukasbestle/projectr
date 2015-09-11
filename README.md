@@ -41,7 +41,7 @@ This is a tutorial on how you would implement this setup with this toolset.
    site_deploy main_site 78ca1d2fa93147b0...
    ```
    
-   There is now a log of the deployment in `~/web/sites/main_site/logs/`, the project code at `~/web/sites/main_site/versions/00001-78ca1d2fa93147b0...` and a symlink to the code at `~/web/sites/main_site/current`. This symlink is automatically created if a deployment worked.
+   There is now a log of the deployment in `~/web/sites/main_site/logs/`, the project code at `~/web/sites/main_site/versions/00001-78ca1d2fa93147b0...` and a symlink to the code at `~/web/sites/main_site/current`. This symlink is automatically created if a deployment succeeded.
 4. **Set the domains to make your project accessible**
    
    Now that your projects are installed and ready, you can let this toolset create links, so the (abstract) sites are made available at specific domains:
@@ -78,7 +78,8 @@ ln -s versions/<version to restore> current
 - Create and delete projects (general repositories like CLI tools) and sites (projects for the webserver)
 - Set an origin Git repository and branch to get new versions from
 - Create and delete links from one or multiple domains to a site
-- Automatic Deployments from GitHub, GitLab or any other Git remote: Get a specific new revision from the Git repository, run a setup script (`.postdeploy.sh` in the repository root) and point a link to the new version
+- Automatic Deployments from GitHub, GitLab or any other Git remote
+- Run an optional setup script (`.postdeploy.sh` in the repository root) in each deployment's destination directory
 - Reverse a deployable project to the last version in one step
 
 ### Directory structure of a project
@@ -116,6 +117,8 @@ If you don't want to keep old versions of your code and use automatic deployment
 	├── <project files>
 	data     # Never directly accessible by user agents and never overwritten
 	└── <persistent non-VCS application data and configuration>
+
+This is useful for projects that aren't using version control. You can still use domain linking with these though.
 
 ### Deployment setup
 
