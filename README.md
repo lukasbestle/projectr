@@ -194,4 +194,4 @@ This is useful for projects that aren't using version control. You can still use
 
 ## License
 
-This project was published under the terms of the MIT license. You can find a copy [over at the repository](https://git.lukasbestle.com/tools/misc/blob/master/LICENSE.md).
+This project was published under the terms of the MIT license. You can find a copy [over at the repository](https://git.lukasbestle.com/projectr/projectr/blob/master/LICENSE.md).
