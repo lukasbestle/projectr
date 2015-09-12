@@ -182,7 +182,7 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		echo -e " => \033[32mSuccess.\033[0m"
 		
 		# Run post-deploy script if existing
-		if [[ -f "$destination/.postdeploy.sh" ]]; then
+		if [[ -x "$destination/.postdeploy.sh" ]]; then
 			# Set the working directory to the destination
 			oldpwd="$(pwd)"
 			cd "$destination"
