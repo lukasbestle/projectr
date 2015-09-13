@@ -135,7 +135,7 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		fi
 		
 		# Get the commit hash from the set branch
-		revision="$(cd "$project/repo"; git rev-list --max-count=1 "$branch")"
+		revision="$(cd "$project/repo"; git rev-list --max-count=1 "origin/$branch")"
 		if [[ $? != 0 ]]; then
 			echo -e " => \033[31mCould not determine current revision.\033[0m" >&2
 			exit 1
