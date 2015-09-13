@@ -1,4 +1,4 @@
-![](logo.png)
+![](https://cdn.codesignd.net/projects/projectr/logo.svg)
 
 > A collection of tools to manage and automatically deploy sites or other repositories on a server
 
