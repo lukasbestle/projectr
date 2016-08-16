@@ -174,7 +174,7 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		
 		# Checkout correct revision
 		echo -e "\033[1mChecking out revision \033[34m$revision\033[0;1m...\033[0m"
-		if ! $(cd "$destination"; git checkout "$revision"); then
+		if ! cd "$destination" || ! git checkout "$revision"; then
 			echo -e " => \033[31mCould not checkout revision \033[34m$revision\033[31m of project \033[34m$project\033[31m.\033[0m" >&2
 			project_deploy::reverse "$project" "$destination"
 			exit 1
@@ -183,7 +183,7 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		
 		# Update submodules
 		echo -e "\033[1mUpdating submodules...\033[0m"
-		if ! $(cd "$destination"; git submodule update --init --recursive); then
+		if ! cd "$destination" || ! git submodule update --init --recursive; then
 			echo -e " => \033[31mCould not update submodules of project \033[34m$project\033[31m.\033[0m" >&2
 			project_deploy::reverse "$project" "$destination"
 			exit 1
