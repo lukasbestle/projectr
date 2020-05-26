@@ -122,7 +122,7 @@ The automatic rollback does essentially the same thing. It only changes the link
 
 The tool `project_deploy` takes the full path to the project and the Git revision to install (`site_deploy` only takes the site name as you saw above). Obviously, this is not very useful, but easy to use in deployment hook scripts.
 
-You can find example PHP implementations for GitHub and GitLab webhooks in `webhook.github.php` and `webhook.gitlab.php`, but you can also create your own if you use a different repository service:
+You can find example PHP implementations for GitHub, GitLab and Gitea webhooks in `webhook.github.php`, `webhook.gitlab.php` and `webhook.gitea.php`, but you can also create your own if you use a different repository service:
 
 1. Write a script that receives webhooks from the repository and gets the repository URL, commit SHA-1 and branch name of the event from the transmitted data.
 2. Read the file `~/.projects`, which contains the paths to all known projects and sites, and iterate through it.
