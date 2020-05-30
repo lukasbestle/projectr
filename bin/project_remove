@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 ########################################################################
-# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+# Copyright 2014 Lukas Bestle <project-projectr@lukasbestle.com>
+# License   MIT
 ########################################################################
 # Removes a project directory.
 #
 # Usage: project_remove <project>
 #        
-#        <project>	Path to the project
+#        <project>  Path to the project
 ########################################################################
 
 project="$1"
@@ -39,5 +40,3 @@ if ! sed -i "/${realpath//\//\/}/d" "$HOME/.projects"; then # Replace / with \/ 
 	exit 1
 fi
 echo -e " => \033[32mSuccess.\033[0m"
-
-exit 0

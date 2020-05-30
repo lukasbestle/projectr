@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 ########################################################################
-# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+# Copyright 2014 Lukas Bestle <project-projectr@lukasbestle.com>
+# License   MIT
 ########################################################################
 # Clones the repository of a project from the server, runs the script
 # .postdeploy.sh in the repository (if existing) and links the version
@@ -8,9 +9,9 @@
 #
 # Usage: project_deploy <project> [<revision>]
 #        
-#        <project>	Path to the project
-#        <revision>	SHA-1 commit hash of the revision to checkout
-#                  	Defaults to the latest commit on the set branch
+#        <project>   Path to the project
+#        <revision>  SHA-1 commit hash of the revision to checkout
+#                    Defaults to the latest commit on the set branch.
 ########################################################################
 # Functions
 
@@ -36,7 +37,7 @@ function project_deploy::reverse() {
 
 # Builds the paths to a version
 declare directoryCount versionNumber versionName destinationRelative destination
-function buildVersionPath() {
+function project_deploy::buildVersionPath() {
 	destinationRelative="versions/$versionName"
 	destination="$(cd "$project" && echo -n "$(pwd)/$destinationRelative")"
 }
@@ -44,7 +45,7 @@ function buildVersionPath() {
 ########################################################################
 
 project="$1"
-revision="$2"
+revision="${2:-latest}"
 
 # Load configuration
 CONFIG_PRESERVE_VERSIONS=5
@@ -62,14 +63,11 @@ if [[ -z "$project" ]]; then
 	echo -e "\033[1mUsage:\033[0m \033[34mproject_deploy\033[0m <project> [<revision>]"
 	exit 1
 fi
-if [[ -z "$revision" ]]; then
-	revision="latest"
-	
-	# Check if the default value for $CONFIG_HASH_LENGTH has been changed
-	if [[ $CONFIG_HASH_LENGTH != 40 ]]; then
-		echo -e "\033[31mYou changed the default value of \033[34m\$CONFIG_HASH_LENGTH\033[31m. To make sure the deployed revisions are unique and never duplicated, deployments of the latest revision aren't supported with a custom value of this option. Please give me the exact revision string in your custom length.\033[0m" >&2
-		exit 1
-	fi
+
+# Check if the default value for $CONFIG_HASH_LENGTH has been changed
+if [[ "$revision" == "latest" ]] && [[ $CONFIG_HASH_LENGTH != 40 ]]; then
+	echo -e "\033[31mYou have changed the default value of \033[34m\$CONFIG_HASH_LENGTH\033[31m. To make sure the deployed revisions are unique and never duplicated, deployments of the latest revision aren't supported with a custom value of this option. Please give me the exact revision string in your custom length.\033[0m" >&2
+	exit 1
 fi
 
 # Check if the project exists
@@ -98,7 +96,7 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 	# We only need to do this if the revision was not deployed yet
 	if ! ls "$project/versions"/*-$revision &> /dev/null; then
 		# Check if the repository has already been cloned
-		url=$(cat "$project/.origin")
+		url="$(cat "$project/.origin")"
 		if ! [[ -d "$project/repo" ]]; then
 			# No, clone it now
 			echo -e "\033[1mCloning from \033[34m$url\033[0;1m for the first time...\033[0m"
@@ -110,7 +108,7 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		else
 			# Yes, only fetch from the remote repository
 			echo -e "\033[1mFetching new commits from \033[34m$url\033[0;1m...\033[0m"
-			if ! (cd "$project/repo"; git fetch); then
+			if ! (git -C "$project/repo" fetch); then
 				echo -e " => \033[31mCould not fetch from \033[34m$url\033[31m.\033[0m" >&2
 				exit 1
 			fi
@@ -127,15 +125,15 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		fi
 	else
 		# Check if the set branch exists
-		branch=$(cat "$project/.branch")
+		branch="$(cat "$project/.branch")"
 		echo -e "\033[1mDetermining current revision for branch \033[34m$branch\033[0;1m...\033[0m"
-		if ! (cd "$project/repo"; git show-branch "$branch" &> /dev/null); then
-			echo -e "\033[31mThe set branch \033[34m$branch\033[31m does not exist.\033[0m" >&2
+		if ! (git -C "$project/repo" show-branch "$branch" &> /dev/null); then
+			echo -e " => \033[31mThe set branch \033[34m$branch\033[31m does not exist.\033[0m" >&2
 			exit 1
 		fi
 		
 		# Get the commit hash from the set branch
-		revision="$(cd "$project/repo"; git rev-list --max-count=1 "origin/$branch")"
+		revision="$(git -C "$project/repo" rev-list --max-count=1 "origin/$branch")"
 		if [[ $? != 0 ]]; then
 			echo -e " => \033[31mCould not determine current revision.\033[0m" >&2
 			exit 1
@@ -149,8 +147,8 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		# Yes, use that
 		
 		# Build the pathname of the destination directory
-		versionName=$(basename $(echo "$project/versions"/*-$revision))
-		buildVersionPath
+		versionName="$(basename "$(echo "$project/versions"/*-$revision)")"
+		project_deploy::buildVersionPath
 		
 		echo -e "\033[1mThis revision has already been installed, using previous installation \033[34m$versionName\033[0;1m.\033[0m"
 	else
@@ -161,7 +159,7 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		latestVersion=$(echo "$(ls "$project/versions" | tail -1)" | cut -f1 -d- | sed 's/^0*//')
 		versionNumber=$(($latestVersion + 1)) # Next is +1
 		versionName="$(printf "%05d" "$versionNumber")-$revision"
-		buildVersionPath
+		project_deploy::buildVersionPath
 		
 		# Copy repository to new destination
 		echo -e "\033[1mCopying repository to deployment destination...\033[0m"
@@ -174,7 +172,7 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		
 		# Checkout correct revision
 		echo -e "\033[1mChecking out revision \033[34m$revision\033[0;1m...\033[0m"
-		if ! cd "$destination" || ! git checkout "$revision"; then
+		if ! git -C "$destination" checkout "$revision"; then
 			echo -e " => \033[31mCould not checkout revision \033[34m$revision\033[31m of project \033[34m$project\033[31m.\033[0m" >&2
 			project_deploy::reverse "$project" "$destination"
 			exit 1
@@ -183,7 +181,7 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 		
 		# Update submodules
 		echo -e "\033[1mUpdating submodules...\033[0m"
-		if ! cd "$destination" || ! git submodule update --init --recursive; then
+		if ! git -C "$destination" submodule update --init --recursive; then
 			echo -e " => \033[31mCould not update submodules of project \033[34m$project\033[31m.\033[0m" >&2
 			project_deploy::reverse "$project" "$destination"
 			exit 1
@@ -256,5 +254,3 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 	echo -e " => \033[32mSuccess.\033[0m"
 	
 } 2>&1 | tee -a "$log" # Duplicate output to log file
-
-exit 0

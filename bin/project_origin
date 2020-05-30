@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 ########################################################################
-# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+# Copyright 2014 Lukas Bestle <project-projectr@lukasbestle.com>
+# License   MIT
 ########################################################################
 # Prepares a project for deployment and sets the origin repository and
 # branch the project is connected to.
 #
 # Usage: project_origin <project> [<origin>]
 #        
-#        <project>	Path to the project
-#        <origin>		Repository URL and branch name (<url>[#<branch>])
-#                		If omitted, the origin gets deleted.
-#                		If the string does not contain a "#", the branch is
-#                		set to "master" ($CONFIG_DEFAULT_BRANCH).
+#        <project>  Path to the project
+#        <origin>   Repository URL and branch name (<url>[#<branch>])
+#                   If omitted, the origin gets deleted.
+#                   If the string does not contain a "#", the branch is
+#                   set to "master" ($CONFIG_DEFAULT_BRANCH).
 ########################################################################
 
 project="$1"
@@ -58,7 +59,7 @@ if [[ -n "$origin" ]]; then
 	else
 		# No branch given, set to master
 		url="$origin"
-		branch=$CONFIG_DEFAULT_BRANCH
+		branch="$CONFIG_DEFAULT_BRANCH"
 	fi
 	
 	# Check if the required directory structure already exists

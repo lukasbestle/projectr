@@ -1,4 +1,4 @@
-![](https://cdn.codesignd.net/projects/projectr/logo.svg)
+# ![projectr](https://cdn.codesignd.net/projects/projectr/logo.svg)
 
 > A collection of tools to manage and automatically deploy sites or other repositories on a server
 
@@ -6,9 +6,9 @@
 
 Fully automatic deployments from Git repositories on GitHub or GitLab are not hard to do, but setting everything up in the first place can be quite difficult and annoying. There are services like [DeployBot](http://deploybot.com) that can do most of the setup work for you, but for small projects and sites such a service can be overkill.
 
-This toolkit attempts to do as less magic as possible to help you to deploy your sites onto your server and to manage your sites with a few easy to understand command line tools written in Bash.
+This toolkit attempts to use as less magic as possible to help you to deploy your sites onto your server and to manage your sites with a few easy to understand command line tools written in Bash.
 
-But there's more: My hoster of choice ([Uberspace](https://uberspace.de)) has a great Apache routing setup: You simply place a directory or symbolic link with the name of the domain (like `www.example.com`) in `/var/www/virtual/<user>/` and every request to the domain is routed to the corresponding directory automatically.
+But there's more: My hosting provider of choice ([Uberspace](https://uberspace.de)) has a great Apache routing setup: You simply place a directory or symbolic link with the name of the domain (like `www.example.com`) in `/var/www/virtual/$USER/` and every request to the domain is routed to the corresponding directory automatically.  
 projectr makes it easy to create and remove these links to connect your deployed sites to one or more domains.
 
 The tools have been tested on Uberspace and are especially great for their setup, but you can of course use all tools on any server with a proper shell (no Windows support, I'm sorry).
@@ -17,7 +17,7 @@ The tools have been tested on Uberspace and are especially great for their setup
 
 #### Introduction
 
-Let's setup projectr for two example sites: A main site at `example.com` and `example.net` and another project at `subdomain.example.com`. The main site is located at a GitHub repository from where everything should be deployed automatically. The other site however won't use automatic deployments, as the users update the contents using FTP.  
+Let's setup projectr for two example sites: A main site at `example.com` and `example.net` and another project at `subdomain.example.com`. The main site is located at a GitHub repository from where everything should be deployed automatically. The other site however won't use automatic deployments, as the users update the contents using SFTP.  
 The result is the following setup:
 
 	example.com/example.net -> Main site ("main_site")
@@ -43,7 +43,7 @@ site_add other_project
 You can now find the sites at `~/web/sites/main_site` and `~/web/sites/other_project`.
 
 There's also `project_add`, which allows you to use a custom path. The `project_*` tools are very useful for repositories/projects that are no sites, for example for command line tools (I setup projectr using projectr on my servers, which is quite awesome).  
-Generally, these tools work very similar. You can find more information in the scripts themselves.
+Generally, these tools work in a very similar way. You can find more information in the scripts themselves.
 
 #### Get the site code from the Git repository (our first deployment)
    
@@ -59,7 +59,7 @@ If you omit the Git revision, the latest one is used instead. But if you want to
 site_deploy main_site 78ca1d2fa93147b0...
 ```
 
-There is now a log of the deployment in `~/web/sites/main_site/logs/`, the project code at `~/web/sites/main_site/versions/00001-78ca1d2fa93147b0...` and a symlink to the code at `~/web/sites/main_site/current`. This symlink is only automatically created if a deployment succeeded.
+There is now a log of the deployment in `~/web/sites/main_site/logs/`, the project code at `~/web/sites/main_site/versions/00001-78ca1d2fa93147b0...` and a symlink to the code at `~/web/sites/main_site/current`. This symlink is only automatically created if the deployment has succeeded.
 
 Our other project is not deployable. This means that you can put any files manually into `~/web/sites/other_project/current`, which is the web root of the site.
 
@@ -110,14 +110,13 @@ The automatic rollback does essentially the same thing. It only changes the link
 
 ## Setup
 
-1. Put this project wherever you want on the destination system and add the `bin` directory to your `$PATH`.
-2. Create a backup of your `DocumentRoot` (`/var/www/virtual/<user>/` on Uberspace) and delete all contents. You can then setup all your sites using projectr.
+1. Put this repository wherever you want on the destination system and add the `bin` directory to your `$PATH`.
+2. Create a backup of your `DocumentRoot` (`/var/www/virtual/<user>/` on Uberspace) and then delete all contents. You can then setup all your sites using projectr.
 3. Create a symlink to your `DocumentRoot` in `~/web` (this is what the `site_*` tools use):  
 	`ln -s /var/www/virtual/$USER/ ~/web`
 	
 	You can also link to a subdirectory of your `DocumentRoot` if you want to manage the sites of this tool separately from your other sites. Completely different destination directories are also possible if you are using a different server setup.  
 	**Please note that the `site_link` functionality doesn't do what you expect when using non-standard paths for `~/web`, because it places the links in `~/web`, not where Uberspace expects them.**
-4. There is no step 4.
 
 ### Deployment setup
 
@@ -143,7 +142,7 @@ CONFIG_DEFAULT_BRANCH="master"
 # Default is a full-length SHA-1 hash, use 7 as value when using short hashes.
 CONFIG_HASH_LENGTH=40
 
-# Number of deployed versions to preserve (0 for infinite (be careful, that might use loads of storage space!))
+# Number of deployed versions to preserve (0 for no limit; be careful, that might use loads of storage space!)
 # Versions older than the latest n versions get deleted automatically, logs are always preserved
 CONFIG_PRESERVE_VERSIONS=5
 ```
@@ -177,7 +176,7 @@ Every project/site follows this directory structure:
 
 ### Directory structure of a non-deployable project
 
-If you don't want to keep old versions of your code and use automatic deployment, simply leave out the `<origin>` parameter when creating the project and you end up with a structure like this:
+If you don't want to keep old versions of your code and use automatic deployment, leave out the `<origin>` parameter when creating the project and you end up with a structure like this:
 
 	.domains # Site-specific: List of linked domains for this site
 	.project # Empty file determining that this is a project
@@ -190,8 +189,8 @@ This is useful for projects that aren't using version control. You can still use
 
 ## Author
 
-- Lukas Bestle <mail@lukasbestle.com>
+- Lukas Bestle <project-projectr@lukasbestle.com>
 
 ## License
 
-This project was published under the terms of the MIT license. You can find a copy [over at the repository](https://git.lukasbestle.com/projectr/projectr/blob/master/LICENSE.md).
+This project was published under the terms of the MIT license. You can find a copy [over at the repository](https://git.codesignd.com/tools/projectr/src/branch/master/LICENSE.md).

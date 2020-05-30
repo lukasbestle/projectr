@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 ########################################################################
-# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+# Copyright 2014 Lukas Bestle <project-projectr@lukasbestle.com>
+# License   MIT
 ########################################################################
 # Reverses a deployable site to the last version.
 #
 # Usage: site_rollback <site>
 #        
-#        <site>	Name of the site (directory in ~/web/sites/)
+#        <site>  Name of the site (directory in ~/web/sites/)
 ########################################################################
 
 site="$1"

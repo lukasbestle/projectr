@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 ########################################################################
-# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+# Copyright 2014 Lukas Bestle <project-projectr@lukasbestle.com>
+# License   MIT
 ########################################################################
 # Creates a site directory in ~/web/sites/, bootstraps it with a basic
 # directory structure and optionally prepares it for deployments.
 #
 # Usage: site_add <site> [<origin>]
 #        
-#        <site>		Name of the site (directory in ~/web/sites/)
-#        <origin>	Repository URL and branch name (<url>[#<branch>])
+#        <site>    Name of the site (directory in ~/web/sites/)
+#        <origin>  Repository URL and branch name (<url>[#<branch>])
 ########################################################################
 
 site="$1"
@@ -42,5 +43,3 @@ if ! touch "$HOME/web/sites/$site/.domains"; then
 	exit 1
 fi
 echo -e " => \033[32mSuccess.\033[0m"
-
-exit 0

@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 ########################################################################
-# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+# Copyright 2014 Lukas Bestle <project-projectr@lukasbestle.com>
+# License   MIT
 ########################################################################
 # Reverses a deployable project to the last version.
 #
 # Usage: project_rollback <project>
 #        
-#        <project>	Path to the project
+#        <project>  Path to the project
 ########################################################################
 
 project="$1"
@@ -32,14 +33,13 @@ fi
 # Check if the project currently has a last version
 if [[ ! -e "$project/last" ]]; then
 	echo -e "\033[31mThe project \033[34m$project\033[31m currently does not have a last version.\033[0m" >&2
-	echo -e "\033[31mProbably, it has already been rolled back since the latest deployment.\033[0m" >&2
+	echo -e "\033[31mIt has probably already been rolled back since the latest deployment.\033[0m" >&2
 	exit 1
 fi
 
 echo -e "\033[1mRolling project \033[34m$project\033[0;1m back to last version...\033[0m"
 if rm -f "$project/current" && mv "$project/last" "$project/current"; then
 	echo -e " => \033[32mSuccess.\033[0m"
-	exit 0
 else
 	echo -e " => \033[31mSomething went wrong.\033[0m" >&2
 	exit 1

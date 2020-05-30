@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 ########################################################################
-# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+# Copyright 2014 Lukas Bestle <project-projectr@lukasbestle.com>
+# License   MIT
 ########################################################################
 # Prepares a site for deployment and sets the origin repository and
 # branch the site is connected to.
 #
 # Usage: site_origin <site> [<origin>]
 #        
-#        <site>		Name of the site (directory in ~/web/sites/)
-#        <origin>	Repository URL and branch name (<url>[#<branch>])
-#                	If omitted, the origin gets deleted.
-#                	If the string does not contain a "#", the branch is
-#                	set to "master".
+#        <site>    Name of the site (directory in ~/web/sites/)
+#        <origin>  Repository URL and branch name (<url>[#<branch>])
+#                  If omitted, the origin gets deleted.
+#                  If the string does not contain a "#", the branch is
+#                  set to "master".
 ########################################################################
 
 site="$1"

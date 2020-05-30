@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 ########################################################################
-# 2014-09-07 Lukas Bestle mail@lukasbestle.com
+# Copyright 2014 Lukas Bestle <project-projectr@lukasbestle.com>
+# License   MIT
 ########################################################################
 # Clones the repository of a site from the server, runs the script
 # .postdeploy.sh in the repository (if existing) and links the version
@@ -8,9 +9,9 @@
 #
 # Usage: site_deploy <site> [<revision>]
 #        
-#        <site>			Name of the site (directory in ~/web/sites/)
-#        <revision>	SHA-1 commit hash of the revision to checkout
-#                  	Defaults to the latest commit on the set branch
+#        <site>      Name of the site (directory in ~/web/sites/)
+#        <revision>  SHA-1 commit hash of the revision to checkout
+#                    Defaults to the latest commit on the set branch.
 ########################################################################
 
 site="$1"

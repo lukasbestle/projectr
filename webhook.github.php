@@ -1,13 +1,14 @@
 <?php
 
 /**
- * Project management tools
+ * projectr
  * Tools for deployments and project management
  * 
  * GitHub frontend for deployments
  * 
- * @author Lukas Bestle <mail@lukasbestle.com>
+ * @author Lukas Bestle <project-projectr@lukasbestle.com>
  * @copyright Copyright 2014 Lukas Bestle
+ * @license MIT
  * @file webhook.github.php
  */
 
@@ -36,14 +37,17 @@ define('TOOLKIT_PATH', '/home/<user>/bin');
  * 4. You should now be able to access https://hooks.example.com/webhook.github.php
  *    This should output "Web hook event (X-Github-Event header) is missing from request.".
  * 
- * Then, you can easily create projects and let this script deploy them for you:
+ * Now you can create projects and let this script deploy them for you:
  * 
- * 5. Create the project on the server by running either `project_add <path> <exact HTTPS clone url from GitHub>#<branch to deploy>` or
+ * 5. If your project is a private repository:
+ *  5.1. Generate an SSH key by using `ssh-keygen`. The default values are alright for this purpose.
+ *  5.2. Copy the contents of `~/.ssh/id_rsa.pub` to your clipboard and add it as "Deploy Key" in your project's GitHub settings interface.
+ * 6. Create the project on the server by running either `project_add <path> <exact HTTPS clone url from GitHub>#<branch to deploy>` or
  *                                                       `site_add    <name> <exact HTTPS clone url from GitHub>#<branch to deploy>`.
- *    It's important to use the exact HTTPS url (not the SSH one), so this script can find the project!
- * 6. Add the URL (the one you tested in 4.) of the script to your project's web hooks.
+ *    It's important to use the exact HTTPS url (not the SSH one) so this script can find the project!
+ * 7. Add the URL (the one you tested in 4.) of the script to your project's web hooks.
  *    Make sure to add the secret configured above and select "Just the push event".
- * 7. GitHub now sends a "ping" event, which is ignored by this script. To test if it all works, push some code to your GitHub repository.
+ * 8. GitHub now sends a "ping" event, which is ignored by this script. To test if it everything works, push some code to your GitHub repository.
  * 
  * Troubleshooting:
  *  - Use `tail -f <path to project>/logs/*.log`. This should tell you what went wrong.
@@ -62,18 +66,18 @@ define('TOOLKIT_PATH', '/home/<user>/bin');
 header('Content-Type: text/plain');
 
 // Check if a secret has been set
-if(SECRET == '<long token>') {
-	http_response_code(400);
-	die('No secret has been set in ' . basename(__FILE__) . '. This script won\'t work without one.');
+if (SECRET === '<long token>') {
+	http_response_code(500);
+	die('No secret has been set in ' . basename(__FILE__) . ". This script won't work without one.");
 }
 
 // Check which event this is
-if(!isset($_SERVER['HTTP_X_GITHUB_EVENT'])) {
+if (isset($_SERVER['HTTP_X_GITHUB_EVENT']) !== true) {
 	http_response_code(400);
 	die('Web hook event (X-Github-Event header) is missing from request.');
 }
 $event = $_SERVER['HTTP_X_GITHUB_EVENT'];
-switch($event) {
+switch ($event) {
 	case 'ping':
 		die('Received ping event, ignoring.');
 		break;
@@ -87,37 +91,37 @@ switch($event) {
 
 // Get the request body
 $input = false;
-switch($_SERVER['CONTENT_TYPE']) {
+switch ($_SERVER['CONTENT_TYPE']) {
 	case 'application/json':
 		echo "Received JSON data in body.\n";
 		$input = file_get_contents('php://input');
 		break;
 	case 'application/x-www-form-urlencoded':
 		echo "Received URL-encoded form data in body.\n";
-		$input = (isset($_POST['payload']))? $_POST['payload'] : '';
+		$input = (isset($_POST['payload']) === true)? $_POST['payload'] : '';
 		break;
 	default:
 		http_response_code(400);
 		die("Don't know what to do with {$_SERVER['CONTENT_TYPE']} content type.");
 } 
-if(!$input) {
+if (!$input) {
 	http_response_code(400);
 	die('No POST body sent.');
 }
 
 // Check if the authentication is valid
-if(!isset($_SERVER['HTTP_X_HUB_SIGNATURE'])) {
+if (isset($_SERVER['HTTP_X_HUB_SIGNATURE']) !== true) {
 	http_response_code(401);
-	die('Secret (X-Hub-Signature header) is missing from request. Have you set a secret in GitHub\'s project settings?');
+	die("Secret (X-Hub-Signature header) is missing from request. Have you set a secret in GitHub's project settings?");
 }
-if('sha1=' . hash_hmac('sha1', $input, SECRET, false) !== $_SERVER['HTTP_X_HUB_SIGNATURE']) {
+if (hash_equals('sha1=' . hash_hmac('sha1', $input, SECRET, false), $_SERVER['HTTP_X_HUB_SIGNATURE']) !== true) {
 	http_response_code(403);
 	die('Secret (X-Hub-Signature header) is wrong or does not match request body.');
 }
 
 // Parse payload
 $payload = json_decode($input, true);
-if(!is_array($payload)) {
+if (is_array($payload) !== true) {
 	http_response_code(400);
 	die('Invalid payload (no JSON?).');
 }
@@ -126,7 +130,7 @@ if(!is_array($payload)) {
 $url    = $payload['repository']['clone_url'];
 $commit = $payload['after'];
 $ref    = $payload['ref'];
-if(!preg_match('{(?:.*/){2}(.*)}', $ref, $matches)) {
+if (preg_match('{(?:.*/){2}(.*)}', $ref, $matches) !== 1) {
 	http_response_code(400);
 	die('Invalid ref field (does not match regular expression "(?:.*/){2}(.*)").');
 }
@@ -138,23 +142,27 @@ echo "Received commit hash \"$commit\" for repository URL \"$url\" (branch \"$br
 // Open ~/.projects and iterate through every project
 $listPointer = fopen($_SERVER['HOME'] . '/.projects', 'r');
 $exitCode = 0;
-while(($project = fgets($listPointer)) !== false) {
+while (($project = fgets($listPointer)) !== false) {
 	// Trim whitespace
 	$project = trim($project);
 	
 	// Only deployable projects are interesting for us
-	if(!is_file($project . '/.origin') || !is_file($project . '/.branch')) continue;
+	if (is_file($project . '/.origin') !== true || is_file($project . '/.branch') !== true) {
+		continue;
+	}
 	
 	// If there is a .origin and .branch file, check if they match
-	if(file_get_contents($project . '/.origin') == $url && file_get_contents($project . '/.branch') == $branch) {
+	if (trim(file_get_contents($project . '/.origin')) === $url && trim(file_get_contents($project . '/.branch')) === $branch) {
 		// Found the right project
 		echo "Found project at $project, running deploy script.\n";
 		
-		// Run deploy script (in the background, because GitHub doesn't like requests > 30sec)
-		passthru('export PATH=' . escapeshellarg(TOOLKIT_PATH) . ':$PATH; project_deploy ' . escapeshellarg($project) . ' ' . escapeshellarg($commit) . ' > /dev/null 2>&1 &', $exitCode);
+		// Run deploy script (in the background, because GitHub doesn't like responses > 30sec)
+		passthru('export PATH=' . escapeshellarg(TOOLKIT_PATH) . ':$PATH; project_deploy ' . escapeshellarg($project) . ' ' . escapeshellarg($commit) . ' &> /dev/null &', $exitCode);
 		
 		// If it didn't work, add debug statement
-		if($exitCode !== 0) echo "Something didn't work.\n";
+		if ($exitCode !== 0) {
+			echo "Something didn't work.\n";
+		}
 	}
 }
 
