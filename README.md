@@ -132,12 +132,12 @@ The tool `project_deploy` takes the full path to the project and the Git revisio
 You can find example PHP implementations for GitHub, GitLab and Gitea webhooks in `webhook.github.php`, `webhook.gitlab.php` and `webhook.gitea.php`, but you can also create your own if you use a different repository service:
 
 1. Write a script that receives webhooks from the repository and gets the repository URL, commit SHA-1 and branch name of the event from the transmitted data.
-2. Read the file `~/.projects`, which contains the paths to all known projects and sites, and iterate through it.
+2. Read the projects file at `~/.config/projectr/projects` if it exists (otherwise `~/.projects`), which contains the paths to all known projects and sites, and iterate through it.
 3. Open the project's `.origin` and `.branch` files. If they match the web-hook, run `project_deploy <path> <commit-sha1>` and you are done.
 
 ### Configuration
 
-If you want to customize specific settings, you can create a Bash file at `~/.project.cnf` to override the default values. These are the possible settings and also the format of the file:
+If you want to customize specific settings, you can create a Bash file at `~/.project.cnf` or `$XDG_CONFIG_HOME/projectr/config.sh` (which defaults to `~/.config/projectr/config.sh`) to override the default values. These are the possible settings and also the format of the file:
 
 ```bash
 # Default branch to set if no one is given to `project_origin`/`site_origin`

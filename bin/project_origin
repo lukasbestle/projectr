@@ -20,7 +20,10 @@ origin="$2"
 
 # Load configuration
 CONFIG_DEFAULT_BRANCH="master"
-if [[ -f "$HOME/.project.cnf" ]]; then
+configPath=${XDG_CONFIG_HOME:-$HOME/.config}
+if [[ -f "$configPath/projectr/config.sh" ]]; then
+	source "$configPath/projectr/config.sh"
+elif [[ -f "$HOME/.project.cnf" ]]; then
 	source "$HOME/.project.cnf"
 fi
 

@@ -66,7 +66,10 @@ revision="${2:-latest}"
 # Load configuration
 CONFIG_PRESERVE_VERSIONS=5
 CONFIG_HASH_LENGTH=40
-if [[ -f "$HOME/.project.cnf" ]]; then
+configPath=${XDG_CONFIG_HOME:-$HOME/.config}
+if [[ -f "$configPath/projectr/config.sh" ]]; then
+	source "$configPath/projectr/config.sh"
+elif [[ -f "$HOME/.project.cnf" ]]; then
 	source "$HOME/.project.cnf"
 fi
 if [[ $CONFIG_PRESERVE_VERSIONS == 1 ]]; then

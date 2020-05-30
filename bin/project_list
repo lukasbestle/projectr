@@ -8,11 +8,19 @@
 # Usage: project_list
 ########################################################################
 
-# Check if the ~/.project file exists
-if [[ ! -f "$HOME/.projects" ]]; then
-	echo -e "\033[31mThere is no \033[34m~/.projects\033[31m file yet.\033[0m" >&2
+# Determine the path to the projects file
+configPath=${XDG_CONFIG_HOME:-$HOME/.config}
+if [[ -d "$configPath/projectr" ]]; then
+	projectsFile="$configPath/projectr/projects"
+else
+	projectsFile="$HOME/.projects"
+fi
+
+# Check if the projects file exists
+if [[ ! -f "$projectsFile" ]]; then
+	echo -e "\033[31mThere is no \033[34m$projectsFile\033[31m file yet.\033[0m" >&2
 	exit 1
 fi
 
-cat "$HOME/.projects"
+cat "$projectsFile"
 exit $?

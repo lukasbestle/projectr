@@ -35,9 +35,17 @@ if ! (mkdir "$project" && mkdir "$project/data" && touch "$project/.project"); t
 fi
 echo -e " => \033[32mSuccess.\033[0m"
 
-# Add to ~/.projects
-echo -e "\033[1mAdding project to \033[34m~/.projects\033[0;1m...\033[0m"
-if ! echo "$(readlink -f "$project")" >> "$HOME/.projects"; then
+# Determine the path to the projects file
+configPath=${XDG_CONFIG_HOME:-$HOME/.config}
+if [[ -d "$configPath/projectr" ]]; then
+	projectsFile="$configPath/projectr/projects"
+else
+	projectsFile="$HOME/.projects"
+fi
+
+# Add to the projects file
+echo -e "\033[1mAdding project to \033[34m$projectsFile\033[0;1m...\033[0m"
+if ! echo "$(readlink -f "$project")" >> "$projectsFile"; then
 	echo -e " => \033[31mSomething went wrong.\033[0m" >&2
 	exit 1
 fi

@@ -108,8 +108,12 @@ $branch = $matches[1];
 // Debug
 echo "Received commit hash \"$commit\" for repository URL \"$url\" (branch \"$branch\").\n";
 
-// Open ~/.projects and iterate through every project
-$listPointer = fopen($_SERVER['HOME'] . '/.projects', 'r');
+// Determine the path to the projects file
+$xdgProjectsFile = ($_ENV['XDG_CONFIG_HOME'] ?? ($_SERVER['HOME'] . '/.config')) . '/projectr/projects';
+$projectsFile = is_file($xdgProjectsFile) === true ? $xdgProjectsFile : $_SERVER['HOME'] . '/.projects';
+
+// Open the projects file and iterate through every project
+$listPointer = fopen($projectsFile, 'r');
 $exitCode = 0;
 while (($project = fgets($listPointer)) !== false) {
 	// Trim whitespace

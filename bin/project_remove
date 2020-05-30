@@ -32,10 +32,18 @@ if ! rm -Rf $project; then
 fi
 echo -e " => \033[32mSuccess.\033[0m"
 
-# Remove from ~/.projects
-echo -e "\033[1mRemoving project from \033[34m~/.projects\033[0;1m...\033[0m"
+# Determine the path to the projects file
+configPath=${XDG_CONFIG_HOME:-$HOME/.config}
+if [[ -d "$configPath/projectr" ]]; then
+	projectsFile="$configPath/projectr/projects"
+else
+	projectsFile="$HOME/.projects"
+fi
+
+# Remove from the projects file
+echo -e "\033[1mRemoving project from \033[34m$projectsFile\033[0;1m...\033[0m"
 realpath="$(readlink -f "$project")"
-if ! sed -i "/${realpath//\//\/}/d" "$HOME/.projects"; then # Replace / with \/ because of the sed separators
+if ! sed -i "/${realpath//\//\/}/d" "$projectsFile"; then # Replace / with \/ because of the sed separators
 	echo -e " => \033[31mSomething went wrong.\033[0m" >&2
 	exit 1
 fi
