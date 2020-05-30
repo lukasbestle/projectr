@@ -4,8 +4,8 @@
 # License   MIT
 ########################################################################
 # Clones the repository of a project from the server, runs the script
-# .postdeploy.sh in the repository (if existing) and links the version
-# as current.
+# .postdeploy.sh in the repository (if existing), links the version
+# as current and runs the script .postlink.sh (if existing).
 #
 # Usage: project_deploy <project> [<revision>]
 #        
@@ -31,6 +31,22 @@ function project_deploy::reverse() {
 		rm -f "$project/current"
 		if [[ -e "$project/last" ]]; then
 			mv "$project/last" "$project/current"
+
+			# Run post-link script if existing
+			if [[ -x "$project/current/.postlink.sh" ]]; then
+				# Set the working directory to the destination
+				oldpwd="$(pwd)"
+				cd "$project/current"
+				
+				echo -e "\033[1mRunning post-link script for reversed version...\033[0m"
+				if ! $project/current/.postlink.sh; then
+					echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+					exit 1
+				fi
+				echo -e " => \033[32mSuccess.\033[0m"
+				
+				cd "$oldpwd"
+			fi
 		fi
 	fi
 }
@@ -253,4 +269,21 @@ echo -e "\033[1;35mRun on \033[34m$(date)\033[35m by \033[34m$USER\033[35m:\n---
 	fi
 	echo -e " => \033[32mSuccess.\033[0m"
 	
+	# Run post-link script if existing
+	if [[ -x "$destination/.postlink.sh" ]]; then
+		# Set the working directory to the destination
+		oldpwd="$(pwd)"
+		cd "$destination"
+		
+		echo -e "\033[1mRunning post-link script...\033[0m"
+		if ! $destination/.postlink.sh; then
+			echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+			project_deploy::reverse "$project" "$destination" true
+			exit 1
+		fi
+		echo -e " => \033[32mSuccess.\033[0m"
+		
+		cd "$oldpwd"
+	fi
+
 } 2>&1 | tee -a "$log" # Duplicate output to log file

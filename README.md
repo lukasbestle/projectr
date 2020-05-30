@@ -63,9 +63,16 @@ There is now a log of the deployment in `~/web/sites/main_site/logs/`, the proje
 
 Our other project is not deployable. This means that you can put any files manually into `~/web/sites/other_project/current`, which is the web root of the site.
 
-#### Deploy scripts
+#### Hook scripts
 
-projectr supports post-deploy scripts that are run as part of the deployment process. Simply add an executable `.postdeploy.sh` Bash script at the top level of your repository. Their working directory is always the current deployment.
+projectr supports hook scripts that are run as part of the deployment and linking process.
+
+Hook scripts need to be executable files in the top level of your repository. Their working directory is always the version directory of the current deployment.
+
+The following hook scripts are currently supported:
+
+- `.postdeploy.sh` will be executed after the deployment, but before the new version is linked.
+- `.postlink.sh` will be executed after the active version gets switched or rolled back.
 
 #### Store persistent data
 

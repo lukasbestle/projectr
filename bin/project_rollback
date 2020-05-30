@@ -44,3 +44,19 @@ else
 	echo -e " => \033[31mSomething went wrong.\033[0m" >&2
 	exit 1
 fi
+
+# Run post-link script if existing
+if [[ -x "$project/current/.postlink.sh" ]]; then
+	# Set the working directory to the destination
+	oldpwd="$(pwd)"
+	cd "$project/current"
+	
+	echo -e "\033[1mRunning post-link script...\033[0m"
+	if ! $project/current/.postlink.sh; then
+		echo -e " => \033[31mSomething went wrong.\033[0m" >&2
+		exit 1
+	fi
+	echo -e " => \033[32mSuccess.\033[0m"
+	
+	cd "$oldpwd"
+fi
