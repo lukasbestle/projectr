@@ -73,7 +73,7 @@ echo -e " => \033[32mSuccess.\033[0m"
 
 # Remove from site's domains
 echo -e "\033[1mRemoving domain from site's domains (\033[34m.domains\033[0;1m file)...\033[0m"
-sed -i "/${domain//\//\/}/d" "$HOME/web/sites/$site/.domains" # Replace / with \/ because of the sed separators
+sed -i "/^${domain//\//\/}$/d" "$HOME/web/sites/$site/.domains" # Replace / with \/ because of the sed separators
 if [[ $? == 0 ]]; then
 	echo -e " => \033[32mSuccess.\033[0m"
 else
